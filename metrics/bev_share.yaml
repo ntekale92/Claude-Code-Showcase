@@ -1,0 +1,26 @@
+metric_id: bev_share
+name: Battery electric share of new cars
+definition_version: 1
+owner: auto-analytics
+status: certified
+question_it_answers: >
+  What share of new cars registered in the UK this quarter were fully battery electric?
+calculation: >
+  BEV car registrations / all car registrations in the quarter x 100, rounded to 2 decimal places.
+grain: quarter (UK)
+filters:
+  - Body type = Cars
+  - First-time registrations only (DfT VEH0160)
+  - Suppressed cells ([c]) excluded from numerator and denominator; count shown in suppressed_lines
+source:
+  table: mart_fuel_mix_quarterly
+  column: share_pct (where fuel_group = 'BEV')
+  dax_measure: "[BEV Share %]"
+quality_checks: [dft_fuel_shares_sum_to_100, dft_unmapped_fuel_types]
+caveats:
+  - Fuel groups are mapped from DfT fuel labels by pattern; new labels land in 'Other' and trigger a warning.
+  - Range-extended electric is grouped with PHEV.
+change_log:
+  - version: 1
+    date: 2026-10-30
+    change: Initial definition

@@ -1,0 +1,68 @@
+// Power BI measures for the Open Data Analytics model.
+// Each measure maps to a card in metrics/*.yaml (source.dax_measure) and must give the same answer
+// as the SQL at the card's grain. The metric-steward subagent checks this.
+//
+// Model: load data/marts_<mode>/*.csv. Add a 'Date' table (CALENDARAUTO or Bravo) marked as a date table:
+//   'Date'[Date] 1-* mart_nsw_sales_clean[contract_date]
+//   'Date'[Date] 1-* mart_fuel_mix_quarterly[quarter_start]
+//   'Date'[Date] 1-* mart_make_quarterly[quarter_start]
+
+// ---------- Property (display folder: Property) ----------
+
+// metrics/median_sale_price.yaml. Recomputed from sale-level rows so it's right for ANY slice.
+// Never average mart_suburb_quarterly[median_price] across suburbs.
+Median Sale Price =
+MEDIAN ( mart_nsw_sales_clean[purchase_price] )
+
+Sales Count =
+COUNTROWS ( mart_nsw_sales_clean )
+
+Low Sample Flag =
+IF ( [Sales Count] < 10, 1, 0 )
+
+Median Sale Price PY =
+CALCULATE ( [Median Sale Price], DATEADD ( 'Date'[Date], -1, YEAR ) )
+
+// metrics/price_growth_yoy.yaml. Blank unless every selected sale (this year and last) sits in a
+// complete quarter, matching the SQL rule that YoY needs BOTH quarters complete.
+Median Price YoY % =
+VAR CurrentComplete =
+    MIN ( mart_nsw_sales_clean[quarter_complete_flag] )
+VAR PriorComplete =
+    CALCULATE (
+        MIN ( mart_nsw_sales_clean[quarter_complete_flag] ),
+        DATEADD ( 'Date'[Date], -1, YEAR )
+    )
+RETURN
+    IF (
+        CurrentComplete = 1 && PriorComplete = 1,
+        DIVIDE ( [Median Sale Price], [Median Sale Price PY] ) - 1
+    )
+
+Median Days to Settle =
+MEDIAN ( mart_nsw_sales_clean[days_to_settle] )
+
+// ---------- New cars (display folder: New cars) ----------
+
+Car Registrations =
+SUM ( mart_fuel_mix_quarterly[units] )
+
+// metrics/bev_share.yaml
+BEV Share % =
+DIVIDE (
+    CALCULATE ( [Car Registrations], mart_fuel_mix_quarterly[fuel_group] = "BEV" ),
+    CALCULATE ( [Car Registrations], REMOVEFILTERS ( mart_fuel_mix_quarterly[fuel_group] ) )
+)
+
+BEV Share % PY =
+CALCULATE ( [BEV Share %], DATEADD ( 'Date'[Date], -1, YEAR ) )
+
+// metrics/make_market_share.yaml
+Make Share % =
+DIVIDE (
+    SUM ( mart_make_quarterly[units] ),
+    CALCULATE ( SUM ( mart_make_quarterly[units] ), REMOVEFILTERS ( mart_make_quarterly[make] ) )
+)
+
+Make BEV Mix % =
+DIVIDE ( SUM ( mart_make_quarterly[bev_units] ), SUM ( mart_make_quarterly[units] ) )

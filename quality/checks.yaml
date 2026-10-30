@@ -1,0 +1,93 @@
+# Data quality checks. Each `sql` returns ONE number. The check passes when that number
+# satisfies `expect` (eq / max / min). severity: error fails the build, warn is reported only.
+# Owners match metrics/*.yaml so a failure routes to whoever owns the definition.
+
+checks:
+  # ---- NSW property sales -------------------------------------------------------------
+  - name: nsw_staging_grain_unique
+    severity: error
+    owner: property-analytics
+    description: One row per sale after de-duplication.
+    sql: |
+      select count(*) - count(distinct (district_code, property_id, sale_counter, dealing_no))
+      from stg_nsw_sales
+    expect: {eq: 0}
+
+  - name: nsw_monthly_reconciles_to_staging
+    severity: error
+    owner: property-analytics
+    description: Included + excluded rows in the monthly mart add back to staging (no silent drops).
+    sql: |
+      select abs((select sum(sales_count) + sum(excluded_total) from mart_nsw_monthly)
+               - (select count(*) from stg_nsw_sales where contract_month is not null))
+    expect: {eq: 0}
+
+  - name: nsw_nominal_price_share
+    severity: warn
+    owner: property-analytics
+    description: Share of sales under $10k (gifts, transfers between related parties). Spikes mean a feed problem.
+    sql: select round(100.0 * avg(flag_nominal_price::int), 2) from stg_nsw_sales
+    expect: {max: 5}
+
+  - name: nsw_settlement_before_contract
+    severity: warn
+    owner: property-analytics
+    description: Settlement dated before contract is a source error; flagged and excluded.
+    sql: select count(*) from stg_nsw_sales where flag_bad_dates
+    expect: {max: 50}
+
+  - name: nsw_unparsed_contract_dates
+    severity: error
+    owner: property-analytics
+    description: Contract dates that failed to parse. More than a handful means the file layout moved.
+    sql: select round(100.0 * avg(flag_missing_contract_date::int), 3) from stg_nsw_sales
+    expect: {max: 0.5}
+
+  - name: nsw_median_prices_positive
+    severity: error
+    owner: property-analytics
+    description: Every published median is a real price.
+    sql: select count(*) from mart_suburb_quarterly where median_price is null or median_price <= 0
+    expect: {eq: 0}
+
+  - name: nsw_yoy_only_on_complete_quarters
+    severity: error
+    owner: property-analytics
+    description: YoY growth is never published for a quarter still inside the reporting lag.
+    sql: select count(*) from mart_suburb_quarterly where median_price_yoy_pct is not null and not is_complete_quarter
+    expect: {eq: 0}
+
+  # ---- UK new-car registrations -------------------------------------------------------
+  - name: dft_quarters_parsed
+    severity: error
+    owner: auto-analytics
+    description: Every quarter column became a real date.
+    sql: select count(*) from stg_dft_registrations where quarter_start is null
+    expect: {eq: 0}
+
+  - name: dft_fuel_shares_sum_to_100
+    severity: error
+    owner: auto-analytics
+    description: Fuel-group shares add to 100% within each quarter (rounding tolerance 0.1).
+    sql: |
+      select count(*) from (
+        select quarter_start, abs(sum(share_pct) - 100) as gap
+        from mart_fuel_mix_quarterly group by 1
+      ) where gap > 0.1
+    expect: {eq: 0}
+
+  - name: dft_suppressed_cell_share
+    severity: warn
+    owner: auto-analytics
+    description: Share of car cells suppressed for disclosure control. Large values make make-level shares unreliable.
+    sql: select round(100.0 * avg(suppressed::int), 2) from stg_dft_registrations where lower(body_type) = 'cars'
+    expect: {max: 20}
+
+  - name: dft_unmapped_fuel_types
+    severity: warn
+    owner: auto-analytics
+    description: Fuel labels that fell into 'Other'. New DfT labels show up here first.
+    sql: |
+      select coalesce(sum(units), 0) * 100.0 / nullif((select sum(units) from stg_dft_registrations), 0)
+      from stg_dft_registrations where fuel_group = 'Other'
+    expect: {max: 2}

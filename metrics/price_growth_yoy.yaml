@@ -1,0 +1,26 @@
+metric_id: price_growth_yoy
+name: Median price growth, year on year
+definition_version: 1
+owner: property-analytics
+status: certified
+question_it_answers: >
+  How much has the typical sale price in this suburb changed versus the same quarter last year?
+calculation: >
+  (median sale price this quarter / median sale price in the same quarter a year earlier - 1) x 100,
+  rounded to 1 decimal place.
+grain: suburb x postcode x dwelling type x contract quarter
+filters:
+  - Same filters as median_sale_price
+  - Only published when BOTH quarters are complete (past the 90-day reporting lag and fully inside the extract)
+source:
+  table: mart_suburb_quarterly
+  column: median_price_yoy_pct
+  dax_measure: "[Median Price YoY %]"
+quality_checks: [nsw_yoy_only_on_complete_quarters]
+caveats:
+  - Compares medians, so a change in the mix of properties sold moves it as much as a change in prices.
+  - Noisy where either quarter is low_sample.
+change_log:
+  - version: 1
+    date: 2026-10-30
+    change: Initial definition. YoY joins on the date one year earlier, not lag(4).

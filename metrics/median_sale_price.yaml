@@ -1,0 +1,28 @@
+metric_id: median_sale_price
+name: Median sale price
+definition_version: 1
+owner: property-analytics
+status: certified
+question_it_answers: >
+  What did a typical house or unit sell for in this suburb in this quarter?
+calculation: >
+  The middle purchase price of all clean residential sales with a contract date in the quarter.
+grain: suburb x postcode x dwelling type x contract quarter
+filters:
+  - Residential only (nature of property 'R' and primary purpose like RESIDENCE)
+  - Excludes prices under $10,000 (gifts and related-party transfers)
+  - Excludes rows where settlement is dated before contract
+  - Dwelling type is Unit when a strata lot or unit number is present, otherwise House
+source:
+  table: mart_suburb_quarterly
+  column: median_price
+  dax_measure: "[Median Sale Price]"
+quality_checks: [nsw_median_prices_positive, nsw_monthly_reconciles_to_staging]
+caveats:
+  - Quarters with fewer than 10 sales are flagged low_sample; don't rank or headline them.
+  - Recent quarters fill in as settlements are reported; use is_complete_quarter for published figures.
+  - Medians can't be averaged across suburbs. Recompute from sales for any wider area.
+change_log:
+  - version: 1
+    date: 2026-10-30
+    change: Initial definition

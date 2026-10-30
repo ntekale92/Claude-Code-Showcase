@@ -1,0 +1,44 @@
+# Automated review on PRs that touch SQL, metric cards or quality checks.
+# Runs the repo's own sql-reviewer and metric-steward subagents and posts one summary comment.
+name: Claude SQL & metric review
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+    paths:
+      - "models/**"
+      - "metrics/**"
+      - "quality/**"
+      - "powerbi/**"
+
+jobs:
+  review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt && make sample >/dev/null && make build >/dev/null
+      - uses: anthropics/claude-code-action@v1
+        env:
+          GH_TOKEN: ${{ github.token }}   # lets `gh pr comment` post the summary
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Review PR #${{ github.event.pull_request.number }} in ${{ github.repository }}.
+            The diff is `git diff origin/${{ github.base_ref }}...HEAD`.
+            1. Use the sql-reviewer subagent on changed files under models/.
+            2. If metrics/, quality/ or powerbi/ changed, use the metric-steward subagent too.
+            3. Post ONE pull request comment with `gh pr comment`: must-fix items first, then
+               should-fix, then a one-line verdict. If nothing needs fixing, say so in one line.
+          claude_args: |
+            --max-turns 30
+            --allowedTools "Read,Grep,Glob,Agent,Bash(git diff *),Bash(python *),Bash(gh pr comment *)"

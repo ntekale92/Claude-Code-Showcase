@@ -1,0 +1,24 @@
+# Governed metric definition card. One file per KPI. Reviewed by the metric-steward subagent.
+metric_id: snake_case_id
+name: Human-readable name
+definition_version: 1
+owner: team-or-person            # matches `owner` in quality/checks.yaml
+status: draft                    # draft | certified | deprecated
+question_it_answers: >
+  The business question, in one sentence.
+calculation: >
+  Plain-English formula a non-technical reader can follow.
+grain: what one value represents (e.g. suburb x dwelling type x quarter)
+filters:
+  - which rows are included or excluded, and why
+source:
+  table: mart_name
+  column: column_name
+  dax_measure: "[Measure Name]"
+quality_checks: [check_name]     # names in quality/checks.yaml
+caveats:
+  - known limitation a reader must know
+change_log:
+  - version: 1
+    date: YYYY-MM-DD
+    change: Initial definition

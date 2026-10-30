@@ -1,0 +1,25 @@
+metric_id: make_market_share
+name: Make market share
+definition_version: 1
+owner: auto-analytics
+status: certified
+question_it_answers: >
+  What share of UK new-car registrations did each brand take this quarter, and how electrified is its mix?
+calculation: >
+  Make's car registrations / all car registrations in the quarter x 100 (2 dp).
+  Companion field bev_mix_pct = make's BEV registrations / make's registrations x 100 (1 dp).
+grain: make x quarter (UK)
+filters:
+  - Body type = Cars
+  - Makes whose every line is suppressed are excluded (no measurable volume)
+source:
+  table: mart_make_quarterly
+  column: market_share_pct
+  dax_measure: "[Make Share %]"
+quality_checks: [dft_suppressed_cell_share]
+caveats:
+  - Small makes are understated where some of their lines are suppressed.
+change_log:
+  - version: 1
+    date: 2026-10-30
+    change: Initial definition

@@ -1,0 +1,51 @@
+# Eval cases for the insight-brief grounding checker.
+# Each case is one candidate finding. Placeholders are filled from the real fact pack at run time:
+#   {money:<fact_id>}  -> $4.84m / $845,000      {pct1:<fact_id>} -> 27.0
+#   {pct2:<fact_id>}   -> 26.99                  {int:<fact_id>}  -> 1,234
+# `expect` is what the checker should conclude. A good checker passes the good cases AND fails the bad ones.
+
+cases:
+  - id: grounded_property_finding
+    expect: pass
+    text: "{suburb_top} had the biggest annual rise, up {pct1:TOP_YOY}% to {money:TOP_PRICE}."
+    fact_ids: [TOP_YOY, TOP_PRICE]
+
+  - id: grounded_money_written_in_full
+    expect: pass
+    text: "The median sale price was ${int:TOP_PRICE}."
+    fact_ids: [TOP_PRICE]
+
+  - id: grounded_bev_comparison
+    expect: pass
+    text: "BEVs were {pct2:uk.fuel.bev.share_pct}% of registrations, up from {pct2:uk.fuel.bev.share_pct_prior_year}% a year earlier."
+    fact_ids: [uk.fuel.bev.share_pct, uk.fuel.bev.share_pct_prior_year]
+
+  - id: hallucinated_number
+    expect: fail
+    reason: number not in any cited fact
+    text: "{suburb_top} prices jumped 41.7% over the year."
+    fact_ids: [TOP_YOY]
+
+  - id: computed_difference
+    expect: fail
+    reason: model did arithmetic (share minus prior share) instead of quoting facts
+    text: "BEV share rose by {diff:uk.fuel.bev.share_pct:uk.fuel.bev.share_pct_prior_year} percentage points."
+    fact_ids: [uk.fuel.bev.share_pct, uk.fuel.bev.share_pct_prior_year]
+
+  - id: unknown_fact_id
+    expect: fail
+    reason: cites a fact that does not exist
+    text: "Sydney-wide medians rose."
+    fact_ids: [nsw.sydney.all.median_price]
+
+  - id: right_number_wrong_citation
+    expect: fail
+    reason: the number is real but belongs to a fact that was not cited
+    text: "BEVs took {pct2:uk.fuel.bev.share_pct}% of the market."
+    fact_ids: [TOP_YOY]
+
+  - id: investment_advice
+    expect: fail
+    reason: briefs describe, they don't advise
+    text: "With growth of {pct1:TOP_YOY}%, now is a good time to buy in {suburb_top_name}."
+    fact_ids: [TOP_YOY]

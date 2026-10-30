@@ -1,0 +1,5 @@
+Reminder after compaction (from .claude/hooks/after-compact.txt):
+- SQL computes numbers; Claude writes words. No number in a brief or doc unless a query produced it.
+- Flag, don't drop. Marts reconcile to staging. Medians for prices. No YoY inside the 90-day lag.
+- DfT [c] cells are NULL, never zero. Never touch data/raw/.
+- `make check` must pass before finishing.

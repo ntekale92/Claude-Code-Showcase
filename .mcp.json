@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "duckdb": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "mcp-server-motherduck",
+        "--db-path",
+        "${ODA_WAREHOUSE:-data/warehouse_sample.duckdb}"
+      ]
+    }
+  }
+}

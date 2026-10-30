@@ -1,0 +1,18 @@
+# licensed source data: never commit (NSW PSI is CC BY-NC-ND)
+data/raw/
+# generated
+data/warehouse_*.duckdb
+data/warehouse_*.duckdb.wal
+data/marts_*/
+reports/
+# local settings and secrets
+.env
+.env.*
+!.env.example
+.claude/settings.local.json
+.claude/agent-memory-local/
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/

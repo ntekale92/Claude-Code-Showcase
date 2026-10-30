@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(make sample)",
+      "Bash(make build)",
+      "Bash(make check)",
+      "Bash(make test)",
+      "Bash(make quality)",
+      "Bash(make evals)",
+      "Bash(make brief)",
+      "Bash(python -m oda.*)",
+      "Bash(python -m pytest *)",
+      "Bash(python evals/run_evals.py *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "mcp__duckdb"
+    ],
+    "ask": [
+      "Bash(make fetch)",
+      "Bash(git push *)",
+      "Bash(git commit *)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Edit(./data/raw/**)",
+      "Write(./data/raw/**)",
+      "Bash(rm -rf *)",
+      "Bash(curl *)",
+      "Bash(wget *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/protect-paths.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Edit(models/**/*.sql)",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/rebuild-on-sql-edit.sh"
+          },
+          {
+            "type": "command",
+            "if": "Write(models/**/*.sql)",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/rebuild-on-sql-edit.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check-before-stop.sh",
+            "timeout": 180
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/after-compact.txt"
+          }
+        ]
+      }
+    ]
+  }
+}
