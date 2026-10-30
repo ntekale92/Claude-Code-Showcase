@@ -49,7 +49,7 @@ through SQL, never through the model.
 
 ## Five-minute demo
 
-1. `make check` — 33 tests, 11 quality checks, 8 eval cases, in seconds, no downloads.
+1. `make check` — 37 tests, 11 quality checks, 8 eval cases, in seconds, no downloads.
 2. Open `.claude/settings.json` and `docs/adr/0003…` — explain hooks vs prompts.
 3. In Claude Code, ask it to edit `data/raw/…` → blocked by the hook, with the reason.
 4. Break a SQL model on purpose → the PostToolUse hook reports the error on that edit.

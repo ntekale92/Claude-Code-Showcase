@@ -9,7 +9,7 @@ with numbers.
 
 ```bash
 pip install -r requirements.txt
-make check        # 33 tests · 11 data quality checks · 8 grounding eval cases — no downloads needed
+make check        # 37 tests · 11 data quality checks · 8 grounding eval cases — no downloads needed
 make brief        # writes reports/insight_brief_sample.md
 ```
 
@@ -66,12 +66,26 @@ Full map: [`docs/claude-workflow.md`](docs/claude-workflow.md).
 
 ## Run on real data
 
+**macOS / Linux**
 ```bash
-make fetch                         # NSW 2024–2026 + DfT VEH0160 into data/raw/ (gitignored)
+make fetch                         # NSW 2024–25 yearly + 2026 weekly files + DfT VEH0160 into data/raw/
 DATA_MODE=real make check
 DATA_MODE=real make brief          # uses Claude if ANTHROPIC_API_KEY is set
 python evals/run_evals.py --live 20  # how often the live model writes a fully grounded brief
 ```
+
+**Windows (PowerShell, no `make` needed)**
+```powershell
+python -m pip install -r requirements.txt
+powershell -ExecutionPolicy Bypass -File scripts\run_real.ps1 -Fetch
+```
+
+**If an NSW download fails:** the Valuer General has moved its site before. Download the yearly and
+weekly zips from the [property sales portal](https://valuation.property.nsw.gov.au/embed/propertySalesInformation)
+into `data/raw/nsw_downloads/`, then run `python -m oda.fetch --nsw-local --dft` (or the script
+again). The DfT file's address changes each release; if it fails, copy the current
+`df_VEH0160_UK.csv` link from the [DfT data files page](https://www.gov.uk/government/statistical-data-sets/vehicle-licensing-statistics-data-files)
+into `DFT_VEH0160_URL`.
 
 Then in Claude Code: `/dq-audit` to explain any warnings, `/insight-brief` for the narrative.
 

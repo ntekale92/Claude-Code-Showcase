@@ -29,7 +29,7 @@ brief: build       ## market brief; uses Claude when ANTHROPIC_API_KEY is set
 	$(PY) -m oda.insights
 
 fetch:             ## download real data (run on your own machine)
-	$(PY) -m oda.fetch --nsw-years 2024 2025 2026 --dft
+	$(PY) -m oda.fetch --nsw-years 2024 2025 --nsw-this-year --dft
 
 clean:
 	rm -rf data/warehouse_*.duckdb data/marts_* reports .pytest_cache

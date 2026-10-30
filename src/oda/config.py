@@ -31,6 +31,12 @@ NSW_PSI_WEEKLY_URL = os.getenv(
     "NSW_PSI_WEEKLY_URL", "https://www.valuergeneral.nsw.gov.au/__psi/weekly/{yyyymmdd}.zip"
 )
 
+# If NSW moves its download addresses, download the yearly/weekly zips by hand from the
+# Valuer General's property sales portal into this folder; `python -m oda.fetch --nsw-local`
+# (and every NSW fetch) extracts whatever zips it finds here. Portal page:
+# https://valuation.property.nsw.gov.au/embed/propertySalesInformation
+NSW_MANUAL_DIR = Path(os.getenv("NSW_MANUAL_DIR", DATA / "raw" / "nsw_downloads"))
+
 # Ordered field names for 'B' (sale) records in the post-2001 .DAT layout, semicolon delimited.
 NSW_B_FIELDS = [
     "record_type", "district_code", "property_id", "sale_counter", "download_datetime",
